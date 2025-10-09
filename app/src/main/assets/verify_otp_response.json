@@ -1,0 +1,7 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "OTP verified successfully",
+  "data": { "token": "your_auth_token_here" },
+  "timestamp": "2025-09-14T18:10:30Z"
+}

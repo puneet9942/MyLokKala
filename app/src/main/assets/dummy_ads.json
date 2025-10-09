@@ -1,0 +1,230 @@
+[
+  {
+    "id": "ad_001",
+    "user": {
+      "id": "user_001",
+      "name": "Anita Joshi",
+      "subtitle": "Classical & Folk Singer",
+      "lat": 19.075999,
+      "lng": 72.877659,
+      "rating": 4.8,
+      "reviewsCount": 42,
+      "imageUrl": "https://example.com/images/anita.jpg",
+      "skills": ["Folk Singer", "Singer"]
+    },
+    "primarySkill": "Singer",
+    "priceMin": 2000,
+    "priceMax": 5000,
+    "description": "Experienced playback and folk singer for weddings and small events.",
+    "createdAt": "2025-09-10T08:30:00Z"
+  },
+  {
+    "id": "ad_002",
+    "user": {
+      "id": "user_002",
+      "name": "Ravi Kumar",
+      "subtitle": "Energetic Wedding Dancer",
+      "lat": 19.070000,
+      "lng": 72.880000,
+      "rating": 4.6,
+      "reviewsCount": 18,
+      "imageUrl": "https://example.com/images/ravi.jpg",
+      "skills": ["Dancer", "Choreographer"]
+    },
+    "primarySkill": "Dancer",
+    "priceMin": 1500,
+    "priceMax": 3500,
+    "description": "Solo and group dance performances, specialises in Bollywood and folk.",
+    "createdAt": "2025-09-12T10:00:00Z"
+  },
+  {
+    "id": "ad_003",
+    "user": {
+      "id": "user_003",
+      "name": "DJ Neel",
+      "subtitle": "Club & Wedding DJ",
+      "lat": 19.080000,
+      "lng": 72.875000,
+      "rating": 4.7,
+      "reviewsCount": 75,
+      "imageUrl": "https://example.com/images/djneel.jpg",
+      "skills": ["DJ", "Instrument Player"]
+    },
+    "primarySkill": "DJ",
+    "priceMin": 5000,
+    "priceMax": 15000,
+    "description": "Professional DJ with sound system and lighting for parties, weddings and corporate gigs.",
+    "createdAt": "2025-09-08T18:00:00Z"
+  },
+  {
+    "id": "ad_004",
+    "user": {
+      "id": "user_004",
+      "name": "Manoj R.",
+      "subtitle": "Stand-up Comedy",
+      "lat": 19.060000,
+      "lng": 72.885000,
+      "rating": 4.5,
+      "reviewsCount": 30,
+      "imageUrl": "https://example.com/images/manoj.jpg",
+      "skills": ["Comedian", "Poet"]
+    },
+    "primarySkill": "Comedian",
+    "priceMin": 3000,
+    "priceMax": 8000,
+    "description": "Stand-up comedian for private events and corporate nights. Clean humour available on request.",
+    "createdAt": "2025-08-25T20:15:00Z"
+  },
+  {
+    "id": "ad_005",
+    "user": {
+      "id": "user_005",
+      "name": "Prerna Shah",
+      "subtitle": "Theatre & Drama Performer",
+      "lat": 19.078000,
+      "lng": 72.872000,
+      "rating": 4.9,
+      "reviewsCount": 55,
+      "imageUrl": "https://example.com/images/prerna.jpg",
+      "skills": ["Drama Actor", "Poet"]
+    },
+    "primarySkill": "Drama Actor",
+    "priceMin": 2500,
+    "priceMax": 7000,
+    "description": "Experienced stage actor for plays, role-plays and interactive performances.",
+    "createdAt": "2025-07-30T14:00:00Z"
+  },
+  {
+    "id": "ad_006",
+    "user": {
+      "id": "user_006",
+      "name": "Ibrahim Khan",
+      "subtitle": "Magic & Illusions",
+      "lat": 19.072500,
+      "lng": 72.881000,
+      "rating": 4.4,
+      "reviewsCount": 9,
+      "imageUrl": "https://example.com/images/ibrahim.jpg",
+      "skills": ["Magician", "Sketch Artist"]
+    },
+    "primarySkill": "Magician",
+    "priceMin": 1800,
+    "priceMax": 4500,
+    "description": "Family-friendly magician performing close-up and stage illusions.",
+    "createdAt": "2025-09-01T16:30:00Z"
+  },
+  {
+    "id": "ad_007",
+    "user": {
+      "id": "user_007",
+      "name": "The Blue Notes",
+      "subtitle": "Live Band for Events",
+      "lat": 19.082000,
+      "lng": 72.879000,
+      "rating": 4.3,
+      "reviewsCount": 12,
+      "imageUrl": "https://example.com/images/bluenotes.jpg",
+      "skills": ["Band", "Instrument Player"]
+    },
+    "primarySkill": "Band",
+    "priceMin": 12000,
+    "priceMax": 40000,
+    "description": "5-member band playing popular Bollywood and western songs. Full PA + light setup available.",
+    "createdAt": "2025-08-20T11:00:00Z"
+  },
+  {
+    "id": "ad_008",
+    "user": {
+      "id": "user_008",
+      "name": "Baba Talwar",
+      "subtitle": "Traditional Dhol Player",
+      "lat": 19.076500,
+      "lng": 72.873500,
+      "rating": 4.2,
+      "reviewsCount": 20,
+      "imageUrl": "https://example.com/images/baba.jpg",
+      "skills": ["Dhol Player", "Folk Dancer"]
+    },
+    "primarySkill": "Dhol Player",
+    "priceMin": 2500,
+    "priceMax": 9000,
+    "description": "Energetic dhol player for baraats, sangeet and festive processions.",
+    "createdAt": "2025-09-05T09:30:00Z"
+  },
+  {
+    "id": "ad_009",
+    "user": {
+      "id": "user_009",
+      "name": "Meera Patel",
+      "subtitle": "Classical Choreographer",
+      "lat": 19.074000,
+      "lng": 72.879500,
+      "rating": 4.85,
+      "reviewsCount": 28,
+      "imageUrl": "https://example.com/images/meera.jpg",
+      "skills": ["Choreographer", "Dancer"]
+    },
+    "primarySkill": "Choreographer",
+    "priceMin": 3000,
+    "priceMax": 10000,
+    "description": "Choreography for weddings, stage shows and dance workshops.",
+    "createdAt": "2025-08-15T13:45:00Z"
+  },
+  {
+    "id": "ad_010",
+    "user": {
+      "id": "user_010",
+      "name": "Ram Singh",
+      "subtitle": "Folk Vocalist",
+      "lat": 19.079000,
+      "lng": 72.878000,
+      "rating": 4.7,
+      "reviewsCount": 34,
+      "imageUrl": "https://example.com/images/ram.jpg",
+      "skills": ["Folk Singer", "Singer"]
+    },
+    "primarySkill": "Folk Singer",
+    "priceMin": 1800,
+    "priceMax": 4500,
+    "description": "Traditional folk vocalist available for cultural events and ceremonies.",
+    "createdAt": "2025-07-20T09:00:00Z"
+  },
+  {
+    "id": "ad_011",
+    "user": {
+      "id": "user_011",
+      "name": "Suman Rao",
+      "subtitle": "Folk Dance Group",
+      "lat": 19.081500,
+      "lng": 72.876000,
+      "rating": 4.6,
+      "reviewsCount": 16,
+      "imageUrl": "https://example.com/images/suman.jpg",
+      "skills": ["Folk Dancer", "Dancer"]
+    },
+    "primarySkill": "Folk Dancer",
+    "priceMin": 2500,
+    "priceMax": 7000,
+    "description": "Group performances showcasing local folk dances and traditions.",
+    "createdAt": "2025-06-18T17:30:00Z"
+  },
+  {
+    "id": "ad_012",
+    "user": {
+      "id": "user_012",
+      "name": "Vikram Iyer",
+      "subtitle": "Multi-instrumentalist & Influencer",
+      "lat": 19.077200,
+      "lng": 72.880800,
+      "rating": 4.9,
+      "reviewsCount": 102,
+      "imageUrl": "https://example.com/images/vikram.jpg",
+      "skills": ["Instrument Player", "Influencer"]
+    },
+    "primarySkill": "ABCD",
+    "priceMin": 3000,
+    "priceMax": 15000,
+    "description": "Guitar, keys and flute player available for intimate gigs and studio sessions.",
+    "createdAt": "2025-09-02T12:00:00Z"
+  }
+]
