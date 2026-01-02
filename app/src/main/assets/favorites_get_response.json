@@ -1,0 +1,45 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Favorites fetched",
+  "data": [
+    {
+      "id": "ad_1",
+      "user": {
+        "id": "user_1",
+        "name": "Ravi Kumar",
+        "subtitle": "Classical Singer",
+        "lat": 28.4390,
+        "lng": 77.3180,
+        "rating": 4.5,
+        "reviewsCount": 12,
+        "imageUrl": null,
+        "skills": ["Singer", "Composer"]
+      },
+      "primarySkill": "Singer",
+      "priceMin": 2000,
+      "priceMax": 5000,
+      "description": "Experienced classical singer for events.",
+      "createdAt": "2024-10-01T10:00:00Z"
+    },
+    {
+      "id": "ad_3",
+      "user": {
+        "id": "user_3",
+        "name": "Deepak Singh",
+        "subtitle": "DJ",
+        "lat": 28.4050,
+        "lng": 77.3190,
+        "rating": 4.8,
+        "reviewsCount": 30,
+        "imageUrl": null,
+        "skills": ["DJ", "Music Producer"]
+      },
+      "primarySkill": "DJ",
+      "priceMin": 4000,
+      "priceMax": 12000,
+      "description": "Professional DJ for parties and weddings.",
+      "createdAt": "2024-07-20T18:00:00Z"
+    }
+  ]
+}

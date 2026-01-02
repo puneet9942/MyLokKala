@@ -1,0 +1,12 @@
+{
+  "status": "error",
+  "status_code": 400,
+  "message": "Invalid OTP",
+  "timestamp": "2025-10-14T17:32:00.000Z",
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "data": null,
+  "error": {
+    "code": "INVALID_OTP",
+    "reason": "OTP does not match"
+  }
+}

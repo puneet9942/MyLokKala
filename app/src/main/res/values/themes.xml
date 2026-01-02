@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Pre-API31 splash theme: use tinted full-bleed drawable -->
+    <style name="Theme.App.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
 
-    <style name="Theme.LokKala" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Runtime theme (hand-off) -->
+    <style name="Theme.App" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+    </style>
 </resources>

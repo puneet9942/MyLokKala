@@ -1,0 +1,64 @@
+{
+  "status": "success",
+  "status_code": 200,
+  "message": "Profile fetched successfully",
+  "timestamp": "2026-01-01T22:01:50.874Z",
+  "request_id": null,
+  "data": {
+    "id": "2b2f12e3-9da7-4da3-8e81-8231a8ce7c57",
+    "fullName": "gbs",
+    "phone": "+919953871086",
+    "photo": "/profile-images/profile-1767304604875-492022514.jpg",
+    "dob": "1992-01-02T00:00:00.000Z",
+    "gender": "male",
+    "profilePhotos": [
+      "/profile-images/profile-1767304899847-226007778.jpg"
+    ],
+    "profileVideos": [
+      "/profile-images/profile-1767304899926-77823398.mp4",
+      "/profile-images/profile-1767304899953-42137400.mp4"
+    ],
+    "pricingType": "fixed",
+    "standardPrice": 3000,
+    "priceMin": 10,
+    "priceMax": 100,
+    "travelRadius": 200,
+    "isEventManager": false,
+    "instaId": "@johndoe",
+    "twitterId": "@johndoe",
+    "youtubeId": "@johndoechannel",
+    "latitude": null,
+    "longitude": null,
+    "profileDescription": "yhs",
+    "bio": "hhs",
+    "facebookId": null,
+    "createdAt": "2025-12-07T15:24:00.185Z",
+    "updatedAt": "2026-01-01T22:01:40.044Z",
+    "interests": [
+      {
+        "interestId": "a711c5d1-487c-4ce5-9faa-0539a30f64d7",
+        "name": "Comedian"
+      },
+      {
+        "interestId": "49cbc8eb-acd9-4309-ac75-ec7de08a04f4",
+        "name": "Choreographer"
+      }
+    ],
+    "averageRating": 0,
+    "totalRatings": 0,
+    "favoriteUsers": [
+      {
+        "id": "3260bc76-c3ac-4bf1-b8df-5391a96b17fd",
+        "user": {
+          "id": "4ccec761-e7b8-4ed7-a058-4b25f289d20a",
+          "fullName": "John Doe",
+          "photo": null,
+          "gender": "male",
+          "pricingType": "fixed"
+        },
+        "favoritedAt": "2026-01-01T20:27:19.702Z"
+      }
+    ]
+  },
+  "error": null
+}

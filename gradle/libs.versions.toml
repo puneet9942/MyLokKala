@@ -21,6 +21,10 @@ moshi = "1.15.1"
 datastore = "1.1.1"
 ksp = "2.0.21-1.0.25"   # NEW, matches your Kotlin 2.0.21
 libphonenumber = "8.13.29"
+playServicesAuth = "21.4.0"
+appcompat = "1.7.1"
+foundationAndroid = "1.7.0"
+foundation = "1.10.0"
 
 
 
@@ -72,6 +76,10 @@ moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.re
 
 # NEW — DataStore
 androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-compose-foundation-android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "foundationAndroid" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 
 [plugins]

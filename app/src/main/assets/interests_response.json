@@ -1,0 +1,58 @@
+{
+  "status": "success",
+  "status_code": 200,
+  "message": "Interests retrieved successfully",
+  "timestamp": "2025-12-20T16:09:54.398Z",
+  "request_id": null,
+  "data": {
+    "interests": [
+      {
+        "id": "755b3f00-6153-4351-bc50-84beea99dd1d",
+        "name": "Band"
+      },
+      {
+        "id": "49cbc8eb-acd9-4309-ac75-ec7de08a04f4",
+        "name": "Choreographer"
+      },
+      {
+        "id": "a711c5d1-487c-4ce5-9faa-0539a30f64d7",
+        "name": "Comedian"
+      },
+      {
+        "id": "d2ed6e0e-f53e-4935-9332-a646b2c7da68",
+        "name": "Dancer"
+      },
+      {
+        "id": "79a68a0f-926c-4eec-8d07-5c59067fff69",
+        "name": "Dhol Player"
+      },
+      {
+        "id": "a89237b1-a98b-4773-b004-d11f6a08eee6",
+        "name": "DJ"
+      },
+      {
+        "id": "80d8588c-c79d-4f46-86bc-96ad5bbfc434",
+        "name": "Drama Actor"
+      },
+      {
+        "id": "67462268-7feb-44a6-b437-d44b3d432953",
+        "name": "Folk Dancer"
+      },
+      {
+        "id": "d2e36bcf-fa96-4dd8-83b9-8383ea854013",
+        "name": "Folk Singer"
+      },
+      {
+        "id": "a37fd3d7-49ec-4a67-89aa-4da6336b518a",
+        "name": "Influencer"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 16,
+      "totalPages": 2
+    }
+  },
+  "error": null
+}

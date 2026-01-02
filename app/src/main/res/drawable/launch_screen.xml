@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/launch_screen_full_tinted.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Safety base: solid white -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+
+    <!-- Full-bleed splash image (stretched to fill) -->
+    <item>
+        <bitmap
+            android:src="@drawable/splash"
+            android:gravity="fill"
+            android:antialias="true" />
+    </item>
+
+    <!-- White tint overlay; adjust alpha (#33 => ~20%) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#33FFFFFF" />
+        </shape>
+    </item>
+
+</layer-list>

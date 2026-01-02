@@ -1,0 +1,8 @@
+{
+  "status": "success",
+  "status_code": 200,
+  "message": "OK",
+  "data": {
+    "message": "User removed from favorites"
+  }
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.App.Splash" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Android 12+ system splash: use your drawable -->
+        <!-- <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash</item>-->
+<!--        <item name="android:windowSplashScreenBackground">?android:colorBackground</item>-->
+        <item name="android:windowSplashScreenAnimationDuration">300</item>
+        <!-- Optional circle behind icon (if you want it) -->
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+<!--        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash</item>-->
+
+        <!-- Pre-Android 12 fallback: full-screen drawable or solid color -->
+        <!-- If you want the same art full-screen on pre-12, keep your drawable here: -->
+        <item name="android:windowBackground">@drawable/splash</item>
+        <!-- prevent system from drawing the centered launcher icon on the splash -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent_icon</item>
+        <!-- keep background (behind the icon) white or any color; we use white here -->
+        <item name="android:windowSplashScreenBackground">@android:color/white</item>
+        <!-- Or, if you prefer a solid color instead: -->
+        <!-- <item name="android:windowBackground">?android:colorBackground</item> -->
+    </style>
+
+    <style name="Theme.App" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowBackground">@color/white</item>
+    </style>
+
+
+</resources>

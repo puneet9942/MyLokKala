@@ -16,6 +16,6 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 
-rootProject.name = "LokKala"
+rootProject.name = "MuseApp"
 include(":app")
  

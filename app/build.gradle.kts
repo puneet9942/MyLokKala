@@ -12,23 +12,23 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ksp)          // NEW: use KSP instead of kapt
+    alias(libs.plugins.ksp)          // KSP plugin (we're using KSP instead of kapt)
     alias(libs.plugins.hilt)
 }
 
 android {
-    namespace = "com.example.lokkala"
+    namespace = "com.example.museapp"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.lokkala"
-        minSdk = 24
+        applicationId = "com.example.museapp"
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
-        buildConfigField("boolean", "USE_FAKE_REPO", "true")
+        buildConfigField("String", "BASE_URL", "\"http://localhost:3000/\"")
+        buildConfigField("boolean", "USE_FAKE_REPO", "false")
         buildConfigField("String", "STREAM_API_KEY",  "\"$streamApiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -56,6 +56,12 @@ android {
     }
 }
 
+// KSP arguments for Room (optional but recommended)
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -76,10 +82,18 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
-    // Hilt with KSP (no kapt, no javapoet issues)
+    // Hilt with KSP (no kapt)
     implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)                    // ← replace kapt with ksp
+    implementation(libs.play.services.auth)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.compose.foundation.android)
+    implementation(libs.androidx.compose.foundation.android)
+    implementation(libs.androidx.compose.foundation)
+    ksp(libs.hilt.compiler)                    // ← Hilt KSP
     implementation(libs.hilt.navigation.compose)
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
@@ -98,7 +112,21 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.35.0-alpha")
     implementation("com.modernmt.text:profanity-filter:1.0.1")
+    implementation("com.google.android.gms:play-services-identity:18.1.0")
+    implementation("com.googlecode.libphonenumber:libphonenumber:8.13.11")
+    implementation("com.airbnb.android:lottie-compose:6.1.0")
+    implementation("androidx.core:core-splashscreen:1.0.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-gif:2.5.0")
 
+    // Room (runtime + ktx + KSP compiler)
+    implementation("androidx.room:room-runtime:2.5.2")
+    implementation("com.google.accompanist:accompanist-flowlayout:0.32.0")
+    implementation("androidx.room:room-ktx:2.5.2")
+    ksp("androidx.room:room-compiler:2.5.2")      // <-- REQUIRED for Room code generation with KSP
+
+    // Optional: Room testing helpers
+    testImplementation("androidx.room:room-testing:2.5.2")
 
     // DataStore (Preferences)
     implementation(libs.androidx.datastore)

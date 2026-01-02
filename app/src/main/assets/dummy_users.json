@@ -1,0 +1,84 @@
+{
+  "status": "success",
+  "status_code": 200,
+  "message": "Users retrieved successfully",
+  "timestamp": "2025-12-11T14:32:43.717Z",
+  "request_id": null,
+  "data": {
+    "users": [
+      {
+        "id": "2b2f12e3-9da7-4da3-8e81-8231b8ce7c57",
+        "fullName": "John Doe",
+        "profileDescription": "Professional Bollywood & Classical Singer",
+        "lat": 19.075999,
+        "lng": 72.877659,
+        "phone": "+919953871086",
+        "priceMin": 3000,
+        "priceMax": 8000,
+        "bio": null,
+        "photo": null,
+        "isEventManager": true,
+        "createdAt": "2025-12-07T15:24:00.185Z",
+        "updatedAt": "2025-12-11T14:28:33.963Z",
+        "interests": [
+          { "name": "Testing" },
+          { "interestId": "d2ed6e0e-f53e-4935-9332-a646b2c7da68", "name": "Dancer" },
+          { "interestId": "899913fa-8760-4712-b64a-9e8e3ed7eea7", "name": "Singer" }
+        ],
+        "averageRating": 0,
+        "totalRatings": 0
+      },
+      {
+        "id": "0fce33a5-d2bd-4ac5-abe6-54138a598917",
+        "fullName": "Jane Smith",
+        "phone": "+0987654321",
+        "photo": null,
+        "priceMin": 2000,
+        "bio": null,
+        "priceMax": 9000,
+        "isEventManager": true,
+        "profileDescription": "Professional Bollywood & Classical Singer",
+        "createdAt": "2025-12-07T15:20:20.029Z",
+        "updatedAt": "2025-12-07T15:20:20.029Z",
+        "lat": 19.07,
+        "lng": 72.88,
+        "interests": [
+          { "interestId": "a89237b1-a98b-4773-b004-d11f6a08eee6", "name": "DJ" },
+          { "interestId": "a711c5d1-487c-4ce5-9faa-0539a30f64d7", "name": "Comedian" },
+          { "name": "Gardeningg" }
+        ],
+        "averageRating": 4,
+        "totalRatings": 9
+      },
+      {
+        "id": "4ccec761-e7b8-4ed7-a058-4b25f289d20a",
+        "fullName": "Alex Kumar",
+        "phone": "+1234567890",
+        "photo": null,
+        "lat": 19.08,
+        "bio": null,
+        "isEventManager": true,
+        "lng": 72.875,
+        "priceMin": 1000,
+        "priceMax": 10000,
+        "profileDescription": "Professional Bollywood & Classical Singer",
+        "createdAt": "2025-12-07T15:20:20.021Z",
+        "updatedAt": "2025-12-07T15:20:20.021Z",
+        "interests": [
+          { "interestId": "899913fa-8760-4712-b64a-9e8e3ed7eea7", "name": "Singer" },
+          { "interestId": "d2ed6e0e-f53e-4935-9332-a646b2c7da68", "name": "Dancer" },
+          { "name": "Paintingg" }
+        ],
+        "averageRating": 5,
+        "totalRatings": 12
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 3,
+      "totalPages": 1
+    }
+  },
+  "error": null
+}

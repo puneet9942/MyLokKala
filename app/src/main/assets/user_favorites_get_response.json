@@ -1,0 +1,31 @@
+[
+  {
+    "id": "fav_user_1",
+    "favoriteUser": {
+      "id": "2b2f12e3-9da7-4da3-8e81-8231b8ce7c57",
+      "fullName": "John Doe",
+      "phone": "+919953871086",
+      "photo": null,
+      "dob": "1990-01-01",
+      "gender": "male",
+      "profilePhotos": [],
+      "profileVideos": [],
+      "pricingType": "fixed",
+      "standardPrice": 1000,
+      "priceMin": 500,
+      "priceMax": 2000,
+      "travelRadius": 50,
+      "isEventManager": true,
+      "instaId": "@john",
+      "twitterId": "@john",
+      "youtubeId": "@john",
+      "createdAt": "2025-12-07T15:24:00.185Z",
+      "updatedAt": "2025-12-21T20:21:02.026Z",
+      "interests": [],
+      "averageRating": 4.5,
+      "totalRatings": 12,
+      "favoriteUsers": []
+    },
+    "createdAt": "2025-12-21T20:28:30.555Z"
+  }
+]
