@@ -23,6 +23,12 @@ data class InterestDto(
     }
 }
 
+@JsonClass(generateAdapter = true)
+data class InterestItemDto(
+    @Json(name = "interestId") val interestId: String? = null,
+    @Json(name = "name") val name: String? = null
+)
+
 data class UserDto(
     @Json(name = "id") val id: String,
     @Json(name = "fullName") val fullName: String? = null,

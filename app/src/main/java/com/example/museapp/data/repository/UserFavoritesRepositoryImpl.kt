@@ -1,6 +1,5 @@
 package com.example.museapp.data.repository
 
-import android.util.Log
 import com.example.museapp.data.remote.ApiService
 import com.example.museapp.data.remote.dto.FavoriteUserAddRequestDto
 import com.example.museapp.data.remote.mapper.toDomain

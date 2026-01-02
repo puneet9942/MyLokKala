@@ -1,10 +1,5 @@
 package com.example.museapp.data.auth.dto
 
-data class Interest(
-    val id: String?,
-    val name: String?
-)
-
 data class UserDto(
     val id: String,
     val phone: String?,

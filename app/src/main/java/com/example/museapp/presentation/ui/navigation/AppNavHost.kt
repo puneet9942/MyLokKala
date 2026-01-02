@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -305,9 +306,13 @@ fun AppNavHost(
             })
         }
 
-        composable(ProfileDestinations.PROFILE_DETAIL) {
-            //ProfileFullscreenScreen(onBack = { navController.popBackStack() })
-            ProfileDisplayScreen()
+        composable(ProfileDestinations.PROFILE_DETAIL) { backStackEntry: NavBackStackEntry ->
+            // obtain the ViewModel using Hilt and the NavBackStackEntry so Hilt's factory is used
+
+
+            ProfileDisplayScreen(
+
+            )
         }
         composable(ProfileDestinations.PROFILE_SUBSCRIPTIONS) { DummyFullScreen(title = "My subscriptions") }
         composable(ProfileDestinations.SUBSCRIBE_PRO) { DummyFullScreen(title = "Subscribe to Pro") }

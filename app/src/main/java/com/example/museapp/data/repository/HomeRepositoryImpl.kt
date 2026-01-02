@@ -1,7 +1,6 @@
 package com.example.museapp.data.repository
 
 import com.example.museapp.data.remote.ApiService
-import com.example.museapp.data.remote.dto.UsersDataDto
 import com.example.museapp.data.remote.mapper.toDomain
 import com.example.museapp.domain.model.User
 import com.example.museapp.domain.repository.HomeRepository
