@@ -2,7 +2,7 @@ package com.example.museapp.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.museapp.BuildConfig
+import com.example.museapp.data.local.AppDatabase
 import com.example.museapp.data.mocks.FakeAuthRepository
 import com.example.museapp.data.mocks.FakeFavoritesRepository
 import com.example.museapp.data.mocks.FakeHomeRepository
@@ -16,12 +16,12 @@ import com.example.museapp.domain.repository.FavoritesRepository
 import com.example.museapp.domain.repository.HomeRepository
 import com.example.museapp.domain.repository.InterestsRepository
 import com.example.museapp.data.local.dao.InterestsDao
+import com.example.museapp.data.local.dao.ProfileCacheDao
 import com.example.museapp.data.local.dao.UserDao
 import com.example.museapp.data.repository.FeedbackRepositoryImpl
 import com.example.museapp.di.NetworkModule.provideMoshi
 import com.example.museapp.domain.repository.FeedbackRepository
 import com.example.museapp.util.AppConstants
-import com.example.museapp.util.AppConstants.USE_FAKE_REPO
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -76,13 +76,32 @@ object RepositoryModule {
         return com.example.museapp.data.store.UserStore(context)
     }
 
+    @Provides
+    @Singleton
+    fun provideProfileCacheDao(db: AppDatabase): ProfileCacheDao {
+        return db.profileCacheDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfileCacheRepository(
+        api: ApiService,
+        profileCacheDao: ProfileCacheDao
+    ): com.example.museapp.data.repository.ProfileCacheRepository {
+        return com.example.museapp.data.repository.ProfileCacheRepositoryImpl(
+            api,
+            profileCacheDao,
+            provideMoshi()
+        )
+    }
+
     // Provide Room database
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): com.example.museapp.data.local.AppDatabase {
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
         return Room.databaseBuilder(
             context,
-            com.example.museapp.data.local.AppDatabase::class.java,
+            AppDatabase::class.java,
             "museapp-db"
         ).build()
     }

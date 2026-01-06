@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,10 +19,11 @@ import com.example.museapp.presentation.feature.feedback.FeedbackScreen
 import com.example.museapp.presentation.feature.home.HomeViewModel
 import com.example.museapp.presentation.feature.login.LoginEvent
 import com.example.museapp.presentation.feature.login.LoginViewModel
-import com.example.museapp.presentation.feature.profile.ProfileDisplayScreen
+//import com.example.museapp.presentation.ui.screens.ProfileDisplayScreen
 import com.example.museapp.presentation.ui.screens.ProfileSetupScreen
 
 import com.example.museapp.presentation.feature.profile.ProfileSetupViewModel
+import com.example.museapp.presentation.ui.screens.ProfileCacheDisplayScreen
 
 
 import com.example.museapp.presentation.ui.screens.*
@@ -306,12 +306,12 @@ fun AppNavHost(
             })
         }
 
-        composable(ProfileDestinations.PROFILE_DETAIL) { backStackEntry: NavBackStackEntry ->
-            // obtain the ViewModel using Hilt and the NavBackStackEntry so Hilt's factory is used
-
-
-            ProfileDisplayScreen(
-
+        composable(ProfileDestinations.PROFILE_DETAIL) { backStackEntry ->
+            ProfileCacheDisplayScreen(
+                onUpdate = {
+                    // handle update, e.g. navigate to edit screen
+                    //navController.navigate(ProfileDestinations.PROFILE_EDIT)
+                }
             )
         }
         composable(ProfileDestinations.PROFILE_SUBSCRIPTIONS) { DummyFullScreen(title = "My subscriptions") }

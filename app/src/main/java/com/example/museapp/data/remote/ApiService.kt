@@ -7,6 +7,7 @@ import com.example.museapp.data.auth.dto.VerifyOtpData
 import com.example.museapp.data.auth.dto.VerifyOtpPayload
 import com.example.museapp.data.remote.dto.AdDto
 import com.example.museapp.data.remote.dto.ApiResponse
+import com.example.museapp.data.remote.dto.CacheUserDto
 import com.example.museapp.data.remote.dto.CommonRequest
 import com.example.museapp.data.remote.dto.EmptyData
 import com.example.museapp.data.remote.dto.FavoriteUserAddRequestDto
@@ -117,6 +118,6 @@ interface ApiService {
     ): ApiResponse<Any>
 
     @GET("/api/user/profile")
-    suspend fun getProfile(): ApiResponse<UserDto>
+    suspend fun getProfile(): ApiResponse<CacheUserDto>
 
 }
