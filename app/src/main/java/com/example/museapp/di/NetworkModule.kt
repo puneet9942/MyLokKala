@@ -4,11 +4,14 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.example.museapp.BuildConfig
 import com.example.museapp.data.remote.ApiService
+import com.example.museapp.data.repository.ExploreEventRepositoryImpl
 import com.example.museapp.data.store.TokenStore
 import com.example.museapp.data.util.AppErrorBroadcaster
 import com.example.museapp.data.util.DefaultAppErrorBroadcaster
 import com.example.museapp.data.util.DefaultGlobalErrorHandler
 import com.example.museapp.data.util.GlobalErrorHandler
+import com.example.museapp.domain.repository.ExploreEventRepository
+import com.example.museapp.data.remote.SerpApiService
 import com.example.museapp.network.LocationInjectorInterceptor
 import com.example.museapp.util.AppConstants
 import com.example.museapp.util.AppContextProvider
@@ -94,8 +97,25 @@ object NetworkModule {
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
 
-    @Provides @Singleton
-    fun provideApi(retrofit: Retrofit): ApiService = retrofit.create(ApiService::class.java)
+    @Provides
+    @Singleton
+    fun provideApi(
+        @BackendRetrofit retrofit: Retrofit
+    ): ApiService = retrofit.create(ApiService::class.java)
+
+    @BackendRetrofit
+    @Provides
+    @Singleton
+    fun provideBackendRetrofit(
+        client: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(AppConstants.BASE_URL)
+            .client(client)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+    }
 
     @Provides
     @Singleton
@@ -105,4 +125,37 @@ object NetworkModule {
     @Singleton
     fun provideGlobalErrorHandler(broadcaster: AppErrorBroadcaster): GlobalErrorHandler =
         DefaultGlobalErrorHandler(broadcaster)
+
+    // --- SerpAPI Retrofit ---
+    @SerpRetrofit
+    @Provides
+    @Singleton
+    fun provideSerpRetrofit(
+        moshi: Moshi
+    ): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("https://serpapi.com/")
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+
+    // --- Serp API ---
+    @Provides
+    @Singleton
+    fun provideSerpApiService(
+        @SerpRetrofit retrofit: Retrofit   // ✅ VERY IMPORTANT
+    ): SerpApiService {
+        return retrofit.create(SerpApiService::class.java)
+    }
+    @Module
+    @InstallIn(SingletonComponent::class)
+    object ExploreEventModule {
+
+        @Provides
+        @Singleton
+        fun provideExploreEventRepository(
+            serpApiService: SerpApiService   // ✅ CORRECT
+        ): ExploreEventRepository {
+            return ExploreEventRepositoryImpl(serpApiService)
+        }
+    }
 }

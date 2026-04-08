@@ -1,6 +1,5 @@
-package com.example.museapp.presentation.feature.home
+package com.example.museapp.presentation.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -13,7 +12,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
@@ -42,7 +40,9 @@ import androidx.compose.material.icons.Icons
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.museapp.presentation.feature.favorites.FavoritesEvent
 import com.example.museapp.presentation.feature.favorites.FavoritesViewModel
+import com.example.museapp.presentation.feature.home.HomeEvent
 import com.example.museapp.presentation.feature.home.HomeUiEffect
+import com.example.museapp.presentation.feature.home.HomeViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -312,6 +312,7 @@ fun HomeTabContent(
                                         isFavorite = isFavorited,
                                         selectedSkill = uiState.selectedSkill,
                                         knownSkills = uiState.skills,
+                                        profileDescription =userWithDistance.user.profileDescription?:"",
                                         onFavorite = {
                                             if (isFavorited) {
                                                 if (!favoriteRecordId.isNullOrBlank()) {

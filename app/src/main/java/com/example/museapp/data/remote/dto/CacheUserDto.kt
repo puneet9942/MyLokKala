@@ -5,10 +5,6 @@ import com.example.museapp.domain.model.Interest
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-/**
- * DTO for the `data` object in the profile API response.
- * toDomain() now returns CacheUser (cache-specific domain model), not the app's User.
- */
 @JsonClass(generateAdapter = true)
 data class CacheUserDto(
     @Json(name = "id") val id: String? = null,
@@ -35,18 +31,32 @@ data class CacheUserDto(
     @Json(name = "facebookId") val facebookId: String? = null,
     @Json(name = "createdAt") val createdAt: String? = null,
     @Json(name = "updatedAt") val updatedAt: String? = null,
-    @Json(name = "interests") val interests: List<InterestDto>? = null,
+    // <- tolerant: allow string list OR object list OR null
+    @Json(name = "interests") val interests: List<Any>? = null,
     @Json(name = "averageRating") val averageRating: Double? = null,
     @Json(name = "totalRatings") val totalRatings: Int? = null,
-    @Json(name = "favoriteUsers") val favoriteUsers: List<String>? = null
+    @Json(name = "favoriteUsers") val favoriteUsers: List<FavoritedUserDto>? = null
 ) {
     /**
      * Convert CacheUserDto -> CacheUser (cache-specific domain model).
+     * This is tolerant of mixed shapes for `interests`:
+     * - List of strings
+     * - List of objects/maps like { "name": "Guitar" }
+     * - null
      */
     fun toDomain(): CacheUser {
-        val domainInterests: List<Interest> = interests
-            ?.mapNotNull { it.toDomain() }
-            ?: emptyList()
+        val domainInterests: List<Interest> = interests?.mapNotNull { raw ->
+            when (raw) {
+                is String -> Interest(name = raw)
+                is Map<*, *> -> {
+                    // safe-extract common keys
+                    val n = raw["name"] as? String ?: raw["interest"] as? String ?: raw["title"] as? String
+                    n?.let { Interest(name = it) }
+                }
+                // sometimes Moshi will create LinkedHashMap for JSON objects -> handled above
+                else -> null
+            }
+        } ?: emptyList()
 
         return CacheUser(
             id = id,
@@ -80,4 +90,3 @@ data class CacheUserDto(
         )
     }
 }
-

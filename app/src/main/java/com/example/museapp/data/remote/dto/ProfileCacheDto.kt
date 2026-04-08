@@ -28,7 +28,7 @@ data class ProfileCacheDto(
     @Json(name = "timestamp") val timestamp: String? = null,
     @Json(name = "request_id") val requestId: String? = null,
     @Json(name = "data") val data: CacheUserDto? = null,
-    @Json(name = "error") val error: Any? = null
+    @Json(name = "error") val error: ErrorDto? = null
 ) {
     /**
      * Convert cached DTO -> domain User by delegating to existing UserDto.toDomain()
@@ -36,3 +36,11 @@ data class ProfileCacheDto(
      */
     fun toDomainUser(): CacheUser? = data?.toDomain()
 }
+
+
+@JsonClass(generateAdapter = true)
+data class ErrorDto(
+    @Json(name = "code") val code: Int? = null,
+    @Json(name = "message") val message: String? = null,
+    @Json(name = "details") val details: Map<String, Any?>? = null
+)

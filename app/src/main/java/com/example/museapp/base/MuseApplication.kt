@@ -7,19 +7,25 @@ import dagger.hilt.android.HiltAndroidApp
 import jakarta.inject.Inject
 
 /**
- * The main Application class for the LokKala app.
+ * Main Application class for the app.
  *
- * This class is the entry point for the application and is responsible for
- * initializing the Hilt dependency injection framework. The `@HiltAndroidApp`
- * annotation triggers Hilt's code generation, which sets up the
- * application-level dependency container.
+ * Acts as the entry point and initializes Hilt for dependency injection.
+ * Also sets up the global error handler used across the application.
  */
 @HiltAndroidApp
-class MuseApplication: Application() {
-    @Inject lateinit var globalErrorHandler: GlobalErrorHandler
+class MuseApplication : Application() {
+
+    /**
+     * Injected global error handler instance.
+     * Used to handle uncaught or centralized errors across the app.
+     */
+    @Inject
+    lateinit var globalErrorHandler: GlobalErrorHandler
 
     override fun onCreate() {
         super.onCreate()
+
+        // Assign the injected handler to a globally accessible holder
         GlobalErrorHandlerHolder.handler = globalErrorHandler
     }
 }

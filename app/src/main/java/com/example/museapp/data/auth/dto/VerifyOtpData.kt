@@ -1,5 +1,8 @@
 package com.example.museapp.data.auth.dto
 
+/**
+ * User data transfer object.
+ */
 data class UserDto(
     val id: String,
     val phone: String?,
@@ -8,7 +11,7 @@ data class UserDto(
     val photo: String?,
     val dob: String?,
     val gender: String?,
-    val profileVideos: Any?,   // kept generic because server may return complex shape or null
+    val profileVideos: Any?,
     val profilePhotos: Any?,
     val pricingType: String?,
     val standardPrice: Int?,
@@ -26,13 +29,16 @@ data class UserDto(
     val facebookId: String?,
     val refreshToken: String?,
     val createdAt: String?,
-    val updatedAt: String?
+    val updatedAt: String?,
 )
 
+/**
+ * Response data for OTP verification.
+ */
 data class VerifyOtpData(
     val user: UserDto?,
     val access_token: String?,
     val refresh_token: String?,
     val expires_in: Long?,
-    val token_type: String?,     // legacy / backward compatibility
+    val token_type: String?,
 )

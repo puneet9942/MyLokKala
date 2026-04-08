@@ -150,6 +150,7 @@ fun SavedTabContent(
                             isFavorite = true,
                             selectedSkill = "",
                             knownSkills = emptyList(),
+                            profileDescription = "",
                             onFavorite = {
                                 // remove favorite by record id
                                 favoritesViewModel.onEvent(FavoritesEvent.RemoveFavorite(fav.id))

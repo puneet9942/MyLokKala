@@ -1,4 +1,4 @@
-package com.example.museapp.data.repository
+package com.example.museapp.domain.repository
 
 import com.example.museapp.data.remote.dto.ProfileCacheDto
 

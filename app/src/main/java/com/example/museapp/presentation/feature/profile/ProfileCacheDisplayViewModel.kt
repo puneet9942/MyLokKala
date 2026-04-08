@@ -3,9 +3,8 @@ package com.example.museapp.presentation.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.museapp.data.remote.dto.ProfileCacheDto
-import com.example.museapp.data.repository.ProfileCacheRepository
+import com.example.museapp.domain.repository.ProfileCacheRepository
 import com.example.museapp.domain.model.CacheUser
-import com.example.museapp.domain.model.User
 import com.example.museapp.presentation.feature.profile.ProfileCacheEvent
 import com.example.museapp.presentation.feature.profile.ProfileCacheState
 import dagger.hilt.android.lifecycle.HiltViewModel

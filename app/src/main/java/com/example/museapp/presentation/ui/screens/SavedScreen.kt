@@ -130,6 +130,7 @@ fun SavedScreen(
                                                 favoritesViewModel.onEvent(FavoritesEvent.RemoveFavorite(fav.id))
                                             },
                                             onViewProfile = { onNavigateToDetails(fav.favoriteUser.id) },
+                                            profileDescription = "",
                                             selectedSkill = "",
                                             knownSkills = emptyList()
                                         )

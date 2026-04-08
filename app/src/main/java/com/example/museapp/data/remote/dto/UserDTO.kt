@@ -32,7 +32,7 @@ data class InterestItemDto(
 data class UserDto(
     @Json(name = "id") val id: String,
     @Json(name = "fullName") val fullName: String? = null,
-    @Json(name = "profile_description") val profile_description: String? = null,
+    @Json(name = "profileDescription") val profileDescription: String? = null,
     @Json(name = "lat") val lat: Double? = null,
     @Json(name = "lng") val lng: Double? = null,
     @Json(name = "phone") val phone: String? = null,
@@ -77,7 +77,7 @@ fun UserDto.toDomain(): User {
     return User(
         id = id,
         fullName = fullName ?: "",
-        profileDescription = profile_description,
+        profileDescription = profileDescription,
         lat = lat,
         lng = lng,
         bio = bio,

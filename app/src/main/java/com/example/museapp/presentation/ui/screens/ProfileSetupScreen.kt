@@ -2,13 +2,14 @@ package com.example.museapp.presentation.ui.screens
 
 import android.app.DatePickerDialog
 import android.content.Context
+import java.time.Instant
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
-
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.animation.animateContentSize
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.AsyncImagePainter
 import com.example.museapp.data.auth.dto.VerifyOtpData
+import com.example.museapp.data.remote.dto.ProfileCacheDto
 import com.example.museapp.presentation.feature.profile.ProfileEvent
 import com.example.museapp.presentation.feature.profile.ProfileSetupViewModel
 import com.example.museapp.presentation.feature.profile.ProfileUiState
@@ -73,6 +75,8 @@ import com.example.museapp.util.InterestValidator
 import com.example.museapp.util.VideoUtils
 import com.example.museapp.util.filterDigitsAndDot
 import com.example.museapp.util.saveBitmapToCache
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -91,13 +95,48 @@ fun ProfileSetupScreen(
     onEvent: ((ProfileEvent) -> Unit)? = null,
     onContinue: (() -> Unit)? = null,
     onFinished: (() -> Unit)? = null,
-    initialVerifyData: VerifyOtpData? = null
+    initialVerifyData: VerifyOtpData? = null,
+    initialVerifyJson: String? = null,
+    initialProfileCache: ProfileCacheDto? = null // NEW optional cache DTO param
 ) {
     val context = LocalContext.current
 
     val actualStateFlow = state ?: viewModel!!.state
     val actualOnEvent: (ProfileEvent) -> Unit = onEvent ?: { viewModel!!.onEvent(it) }
 
+    // observe cache DTO from ViewModel (reactive) — prefer VM-provided cache over one-shot initial param
+    val observedCacheDto by remember {
+        viewModel?.profileCacheDto
+    }?.collectAsState(initial = initialProfileCache) ?: remember { mutableStateOf(initialProfileCache) }
+
+// prevent re-applying the same cache repeatedly: track last applied cache id
+    val lastAppliedCacheId = remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(observedCacheDto) {
+        val cache = observedCacheDto ?: return@LaunchedEffect
+        val cacheId = cache.data?.id
+        if (cacheId != null && cacheId == lastAppliedCacheId.value) {
+            // already applied this cache; skip
+            return@LaunchedEffect
+        }
+        // update last applied id
+        lastAppliedCacheId.value = cacheId
+
+        // dispatch lightweight events so text fields reflect cache immediately
+        cache.data?.fullName?.let { actualOnEvent(ProfileEvent.NameChanged(it)) }
+        cache.data?.dob?.let { raw ->
+            val formatted = try {
+                OffsetDateTime.parse(raw).toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            } catch (_: Exception) { raw }
+            actualOnEvent(ProfileEvent.DobChanged(formatted))
+        }
+        // you can add more fields if you want e.g., gender, insta, interests — example:
+        cache.data?.gender?.let { actualOnEvent(ProfileEvent.GenderChanged(it)) }
+        cache.data?.profileDescription?.let { actualOnEvent(ProfileEvent.DescriptionChanged(it)) }
+        cache.data?.bio?.let { actualOnEvent(ProfileEvent.BiographyChanged(it)) }
+    }
+
+    // prefill from verify data if present (existing behavior)
     LaunchedEffect(initialVerifyData) {
         if (initialVerifyData != null) {
             viewModel?.prefillFromVerify(initialVerifyData)
@@ -114,6 +153,83 @@ fun ProfileSetupScreen(
             }
         }
     }
+
+    LaunchedEffect(initialVerifyJson) {
+        val json = initialVerifyJson ?: return@LaunchedEffect
+        try {
+            val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+            val adapter = moshi.adapter(VerifyOtpData::class.java)
+            val parsed: VerifyOtpData? = adapter.fromJson(json)
+            if (parsed != null) {
+                viewModel?.prefillFromVerify(parsed)
+                parsed.user?.fullName?.let { actualOnEvent(ProfileEvent.NameChanged(it)) }
+                parsed.user?.dob?.let { raw ->
+                    val formatted = try {
+                        OffsetDateTime.parse(raw)
+                            .toLocalDate()
+                            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    } catch (_: Exception) {
+                        raw
+                    }
+                    actualOnEvent(ProfileEvent.DobChanged(formatted))
+                }
+            } else {
+                Log.w("ProfileSetup", "initialVerifyJson parsed to null")
+            }
+        } catch (t: Throwable) {
+            Log.w("ProfileSetup", "failed to parse initialVerifyJson: ${t.message}")
+        }
+    }
+
+    // NEW: prefill from Room-cached DTO if provided (no side-effects)
+    // Place this in your ProfileSetupScreen.kt instead of the old LaunchedEffect(initialProfileCache) block
+    // safe replacement for the LaunchedEffect(initialProfileCache) block
+    LaunchedEffect(initialProfileCache) {
+        val incoming = initialProfileCache ?: return@LaunchedEffect
+
+        // Use the authoritative VM epoch (if available) rather than deriving vmEpoch from a DTO string
+        val vmEpoch: Long = viewModel?.cacheEpoch?.value ?: -1L
+
+        // parse ISO -> epoch millis safely (non-composable, safe for coroutine)
+        fun safeEpochMillis(iso: String?): Long {
+            return try {
+                if (iso.isNullOrBlank()) return -1L
+                Instant.parse(iso).toEpochMilli()
+            } catch (_: Exception) {
+                -1L
+            }
+        }
+
+        val incomingEpoch = safeEpochMillis(incoming.data?.updatedAt)
+
+        // Decide only when incoming is strictly newer than VM epoch
+        val shouldApply = incomingEpoch > vmEpoch
+
+        val cacheId = incoming.data?.id
+
+        if (shouldApply && cacheId != null && lastAppliedCacheId.value != cacheId) {
+            Log.d("upsert2", "Applying initialProfileCache (newer): ${incoming.data?.fullName} incomingEpoch=$incomingEpoch vmEpoch=$vmEpoch")
+
+            viewModel?.prefillFromCache(incoming)
+            incoming.data?.fullName?.let { actualOnEvent(ProfileEvent.NameChanged(it)) }
+            incoming.data?.dob?.let { raw ->
+                val formatted = try {
+                    OffsetDateTime.parse(raw).toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                } catch (_: Exception) {
+                    raw
+                }
+                actualOnEvent(ProfileEvent.DobChanged(formatted))
+            }
+
+            // mark applied so we don't reapply the same cache
+            lastAppliedCacheId.value = cacheId
+        } else {
+            Log.d("upsert2", "Skipping initialProfileCache (older or not comparable): ${incoming.data?.fullName} incomingEpoch=$incomingEpoch vmEpoch=$vmEpoch")
+        }
+    }
+
+
+
 
     val ui by actualStateFlow.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -250,6 +366,8 @@ fun ProfileSetupScreen(
     ) { innerPadding ->
         val scrollState = rememberScrollState()
 
+
+
         // Provide default text style + content color so unstyled Texts and placeholders inherit app typography
         CompositionLocalProvider(LocalContentColor provides Color.Black) {
             ProvideTextStyle(value = AppTypography.bodyMedium) {
@@ -313,7 +431,14 @@ fun ProfileSetupScreen(
                         exit = fadeOut() + slideOutVertically { it / 3 }
                     ) {
                         val availableInterestsFromVm = viewModel?.availableInterests?.collectAsState(initial = emptyList())?.value ?: emptyList()
-                        StepTwo(ui = ui, onEvent = actualOnEvent, available = availableInterestsFromVm)
+                        val mergedInterests = remember(availableInterestsFromVm, ui.interests) {
+                            (availableInterestsFromVm + ui.interests)
+                                .map { it.trim() }
+                                .filter { it.isNotEmpty() }
+                                .distinctBy { it.lowercase() }
+                        }
+                        StepTwo(ui = ui, onEvent = actualOnEvent, available = mergedInterests)
+
                     }
 
                     // Step 3
@@ -869,9 +994,9 @@ private fun FlowRowInterests(
         available.chunked(3).forEach { row ->
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { item ->
-                    val sel = selected.contains(item)
+                    val sel = selected.any { it.trim().equals(item.trim(), ignoreCase = true) }
                     OriginalStyleChip(text = item, selected = sel) {
-                        onToggle(item)
+                        onToggle(item) // keep sending the canonical 'item' from available list
                     }
                 }
             }

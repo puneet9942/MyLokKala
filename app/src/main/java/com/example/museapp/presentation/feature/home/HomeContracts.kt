@@ -24,6 +24,7 @@ data class HomeUiState(
     val favorites: Set<String> = emptySet(),
     val selectedSkill: String = "All",
     val searchQuery: String = "",
+    val profileDescription: String ="",
     val currentLat: Double = AppConstants.DEFAULT_LAT,
     val currentLng: Double = AppConstants.DEFAULT_LNG,
     val locationLabel: String = AppConstants.DEFAULT_LOCATION_NAME,

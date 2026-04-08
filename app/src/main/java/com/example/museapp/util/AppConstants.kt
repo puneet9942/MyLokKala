@@ -7,6 +7,8 @@ object AppConstants {
     const val TIMEOUT = 30_000L
     const val OTP_LENGTH = 6
     const val DEFAULT_COUNTRY_CODE = "+91"
+    const val PROFILE_CACHE_USER_ID = "me"
+
     const val USE_FAKE_REPO: Boolean = false
  const val SPLASH_SCREEN_DURATION_MILLISECONDS = 2000L
  val DEFAULT_INTERESTS: List<String> = listOf(

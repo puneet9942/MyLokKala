@@ -1,8 +1,10 @@
 package com.example.museapp.presentation.feature.login
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.museapp.data.auth.dto.VerifyOtpData
 import com.example.museapp.data.store.TokenStore
 import com.example.museapp.domain.usecase.RequestOtpUseCase
 import com.example.museapp.domain.usecase.VerifyOtpUseCase
@@ -10,8 +12,12 @@ import com.example.museapp.data.util.AppError
 import com.example.museapp.data.util.AppErrorBroadcaster
 import com.example.museapp.data.util.NetworkResult
 import com.example.museapp.data.util.parseApiErrorBody
+import com.example.museapp.util.AppContextProvider
 import com.example.museapp.util.ValidationUtils
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +30,8 @@ class LoginViewModel @Inject constructor(
     private val requestOtp: RequestOtpUseCase,
     private val verifyOtp: VerifyOtpUseCase,
     private val tokenStore: TokenStore,
-    private val appErrorBroadcaster: AppErrorBroadcaster? = null
+    private val appErrorBroadcaster: AppErrorBroadcaster? = null,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
@@ -83,8 +90,27 @@ class LoginViewModel @Inject constructor(
             is NetworkResult.Success -> {
                 Log.d("LoginViewModel", "doVerifyOtp: success -> setting loginSuccess=true")
                 _state.value = _state.value.copy(loading = false, loginSuccess = true)
+
+                val verifyData: VerifyOtpData? = res.data
+                // store token as before
                 val token = res.data.access_token ?: ""
                 token?.let { tokenStore.setToken(it) }
+
+                // --- NEW: persist verify response JSON into SharedPreferences (one-time cache) ---
+                try {
+
+                    if (verifyData != null) {
+                        val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+                        val adapter = moshi.adapter(VerifyOtpData::class.java)
+                        val json = adapter.toJson(verifyData)
+                        val prefs = appContext.getSharedPreferences("museapp_auth_prefs", Context.MODE_PRIVATE)
+                        prefs.edit().putString("verify_response_json", json).apply()
+                    }
+                } catch (t: Throwable) {
+                    Log.w("LoginViewModel", "Failed to persist verify response json: ${t.message}")
+                }
+
+                // notify host to navigate
                 viewModelScope.launch { _events.emit(LoginViewEvent.LoggedIn) }
             }
 

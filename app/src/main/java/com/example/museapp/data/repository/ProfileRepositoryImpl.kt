@@ -227,42 +227,101 @@ class ProfileRepositoryImpl @Inject constructor(
             null
         }
 
-        if (dataObj != null) {
-            val rawServerJson: String? = try { moshi.adapter(Any::class.java).toJson(dataObj) } catch (_: Exception) { null }
+// quick debug: log the raw response and data node (safe guard with try-catch)
+        try {
+            Log.d(TAG, "updateResp raw: ${updateResp?.toString() ?: "null"}")
+        } catch (_: Throwable) { /* ignore logging errors */ }
 
-            val mappedUser: User? = try {
-                when (dataObj) {
-                    is ProfileDataDto -> dataObj.toDomain()
-                    is UserDto -> dataObj.toDomain()
-                    else -> {
-                        val rawJson = moshi.adapter(Any::class.java).toJson(dataObj)
-                        try {
-                            val ud = moshi.adapter(UserDto::class.java).fromJson(rawJson)
-                            ud?.toDomain()
-                        } catch (_: Exception) {
-                            null
-                        }
+        try {
+            val dataPreview = if (dataObj == null) "null" else try { moshi.adapter(Any::class.java).toJson(dataObj) } catch (_: Exception) { dataObj.toString() }
+            Log.d(TAG, "updateResp.data (preview): $dataPreview")
+        } catch (_: Throwable) {
+            Log.d(TAG, "updateResp.data present but failed to stringify")
+        }
+
+        var mappedUser: User? = null
+        var userJson: String? = null
+
+        try {
+            when (dataObj) {
+                is Map<*, *> -> {
+                    // API shape observed: data = { "user": { ... } }
+                    val userVal = dataObj["user"] ?: dataObj["User"] ?: dataObj["data"] ?: dataObj
+                    try {
+                        userJson = moshi.adapter(Any::class.java).toJson(userVal)
+                        Log.d(TAG, "extracted nested user (Map) json: ${userJson?.take(1000)}")
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "failed to toJson userVal from Map: ${e.message}", e)
+                        userJson = try { moshi.adapter(Any::class.java).toJson(dataObj) } catch (_: Exception) { null }
                     }
+                }
+                is ProfileDataDto -> {
+                    try {
+                        val ud = dataObj.user
+                        userJson = ud?.let { moshi.adapter(UserDto::class.java).toJson(it) }
+                        Log.d(TAG, "extracted nested user from ProfileDataDto: ${userJson?.take(1000)}")
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "failed to extract user from ProfileDataDto: ${e.message}", e)
+                    }
+                }
+                is UserDto -> {
+                    try {
+                        userJson = moshi.adapter(UserDto::class.java).toJson(dataObj)
+                        Log.d(TAG, "data is UserDto json: ${userJson?.take(1000)}")
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "failed to stringify UserDto: ${e.message}", e)
+                    }
+                }
+                else -> {
+                    try {
+                        userJson = moshi.adapter(Any::class.java).toJson(dataObj)
+                        Log.d(TAG, "data is other type, serialized preview: ${userJson?.take(1000)}")
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "failed to stringify unknown dataObj: ${e.message}", e)
+                    }
+                }
+            }
+
+            if (!userJson.isNullOrBlank()) {
+                val ud = try {
+                    moshi.adapter(UserDto::class.java).fromJson(userJson!!)
+                } catch (e: Throwable) {
+                    Log.w(TAG, "moshi.fromJson -> UserDto failed: ${e.message}", e)
+                    null
+                }
+
+                if (ud != null) {
+                    try {
+                        mappedUser = ud.toDomain()
+                        Log.d(TAG, "mappedUser from UserDto -> User: id=${mappedUser?.id} fullName=${mappedUser?.fullName} interestsCount=${mappedUser?.interests?.size ?: 0}")
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "toDomain() failed: ${e.message}", e)
+                    }
+                } else {
+                    Log.d(TAG, "UserDto is null after parsing userJson; userJson preview: ${userJson?.take(1000)}")
+                }
+            } else {
+                Log.d(TAG, "userJson is null/blank; cannot parse UserDto")
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "Mapping updateResp.data -> User failed: ${t.message}", t)
+        }
+
+// if we successfully mapped a server user, persist and return it
+        if (mappedUser != null) {
+            try {
+                withContext(ioDispatcher) {
+                    val rawServerJson = userJson ?: try { moshi.adapter(Any::class.java).toJson(dataObj) } catch (_: Exception) { null }
+                    val entity = mappedUser.toEntity(moshi, rawServerJson)
+                    userDao.insertUser(entity)
+                    Log.d(TAG, "persisted mapped user to DB: id=${mappedUser.id}")
                 }
             } catch (t: Throwable) {
-                Log.w(TAG, "Mapping updateResp.data -> User failed: ${t.message}")
-                null
+                Log.w(TAG, "Failed to persist mapped user: ${t.message}", t)
             }
-
-            if (mappedUser != null) {
-                // persist mapped user safely (no side-effects)
-                try {
-                    withContext(ioDispatcher) {
-                        val entity = mappedUser.toEntity(moshi, rawServerJson)
-                        userDao.insertUser(entity)
-                    }
-                } catch (t: Throwable) {
-                    Log.w(TAG, "Failed to persist mapped user: ${t.message}")
-                }
-
-                return@safeApiCall mappedUser
-            }
+            return@safeApiCall mappedUser
         }
+
 
         // --- 7) Fallback: construct User from cleaned payload and persist ---
         val payloadMapFinal: Map<String, Any> = try {
@@ -296,7 +355,7 @@ class ProfileRepositoryImpl @Inject constructor(
 
         val idValue = anyToString("id", listOf("_id", "userId", "user_id")) ?: ""
         val fullNameValue = anyToString("fullName", listOf("fullname", "name")) ?: ""
-        val profileDescriptionValue = anyToString("profileDescription", listOf("description", "profile_description")) ?: ""
+        val profileDescriptionValue = anyToString("profileDescription", listOf("description", "profile_description", "profileDescription")) ?: ""
         val bioValue = anyToString("biography", listOf("bio")) ?: ""
         val phoneValue = anyToString("phone", listOf("mobile", "phoneNumber", "phone_number")) ?: ""
         val createdAtValue = anyToString("createdAt", listOf("created_at")) ?: ""

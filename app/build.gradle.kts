@@ -30,6 +30,7 @@ android {
         buildConfigField("String", "BASE_URL", "\"http://localhost:3000/\"")
         buildConfigField("boolean", "USE_FAKE_REPO", "false")
         buildConfigField("String", "STREAM_API_KEY",  "\"$streamApiKey\"")
+        buildConfigField("String", "SERP_API_KEY", "\"${project.properties["SERP_API_KEY"]}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -89,6 +90,7 @@ dependencies {
     implementation(libs.androidx.compose.foundation.android)
     implementation(libs.androidx.compose.foundation.android)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.core.i18n)
     ksp(libs.hilt.compiler)                    // ← Hilt KSP
     implementation(libs.hilt.navigation.compose)
     implementation("com.google.android.gms:play-services-location:21.1.0")
@@ -124,6 +126,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-flowlayout:0.32.0")
     implementation("androidx.room:room-ktx:2.5.2")
     ksp("androidx.room:room-compiler:2.5.2")      // <-- REQUIRED for Room code generation with KSP
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Optional: Room testing helpers
     testImplementation("androidx.room:room-testing:2.5.2")

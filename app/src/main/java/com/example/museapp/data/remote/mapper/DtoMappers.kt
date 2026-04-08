@@ -1,12 +1,15 @@
 package com.example.museapp.data.remote.mapper
 
 import com.example.museapp.data.remote.dto.AdDto
+import com.example.museapp.data.remote.dto.EventDto
+import com.example.museapp.data.remote.dto.ExploreEventResponseDto
 import com.example.museapp.data.remote.dto.FeedbackResponseDto
 import com.example.museapp.data.remote.dto.InterestDto
 import com.example.museapp.data.remote.dto.UserDto
 import com.example.museapp.data.remote.dto.ProfileDataDto
 import com.example.museapp.data.remote.dto.ProfileRequestDto
 import com.example.museapp.domain.model.Ad
+import com.example.museapp.domain.model.ExploreEvent
 import com.example.museapp.domain.model.Feedback
 import com.example.museapp.domain.model.Interest
 import com.example.museapp.domain.model.User
@@ -45,7 +48,7 @@ fun UserDto.toDomain(): User {
     return User(
         id = this.id ?: "",
         fullName = this.fullName ?: "",
-        profileDescription = this.profile_description,
+        profileDescription = this.profileDescription,
         lat = this.lat,
         lng = this.lng,
         phone = this.phone,
@@ -132,4 +135,28 @@ fun ProfileDataDto.toDomain(): User {
             totalRatings = 0
         )
     }
+
+}
+
+fun ExploreEventResponseDto.toDomain(): List<ExploreEvent> {
+    return this.events_results?.mapNotNull { it?.toDomain() } ?: emptyList()
+}
+
+fun EventDto.toDomain(): ExploreEvent {
+    return ExploreEvent(
+        title = this.title?.trim().orEmpty(),
+
+        date = this.date?.startDate.orEmpty(),
+
+        location = this.address
+            ?.filterNotNull()
+            ?.joinToString(", ")
+            .orEmpty(),
+
+        link = this.link.orEmpty(),
+
+        imageUrl = this.thumbnail.orEmpty(),
+
+        ticketLink = "" // or map later if API supports
+    )
 }

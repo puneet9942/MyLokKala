@@ -21,6 +21,7 @@ import com.example.museapp.data.local.dao.UserDao
 import com.example.museapp.data.repository.FeedbackRepositoryImpl
 import com.example.museapp.di.NetworkModule.provideMoshi
 import com.example.museapp.domain.repository.FeedbackRepository
+import com.example.museapp.domain.repository.ProfileCacheRepository
 import com.example.museapp.util.AppConstants
 import dagger.Module
 import dagger.Provides
@@ -50,6 +51,7 @@ object RepositoryModule {
                 provideMoshi(),
                 userDao
             )
+
 
 
 
@@ -85,12 +87,13 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideProfileCacheRepository(
-        api: ApiService,
-        profileCacheDao: ProfileCacheDao
-    ): com.example.museapp.data.repository.ProfileCacheRepository {
+        api: com.example.museapp.data.remote.ApiService,
+        profileCacheDao: com.example.museapp.data.local.dao.ProfileCacheDao
+    ): ProfileCacheRepository {
+        // Note: constructor expects (profileCacheDao, apiService, moshi)
         return com.example.museapp.data.repository.ProfileCacheRepositoryImpl(
-            api,
             profileCacheDao,
+            api,
             provideMoshi()
         )
     }

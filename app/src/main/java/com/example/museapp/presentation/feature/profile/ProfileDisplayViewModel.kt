@@ -136,7 +136,7 @@ class ProfileDisplayViewModel @Inject constructor(
             mainPhoto = mainPhotoForUi,
             rawMainPhoto = rawMainPhotoCandidate,
             fullName = preferString("fullName", "full_name", "name", fallback = e.fullName),
-            profileDescription = preferString("profileDescription", "profile_description", fallback = e.profileDescription),
+            profileDescription = preferString("profileDescription", fallback = e.profileDescription),
             bio = preferString("bio", fallback = e.bio),
             phone = preferString("phone", "mobile", "phone_number", fallback = e.phone),
             lat = preferDouble("lat", "latitude", fallback = e.latitude?.toDouble()),

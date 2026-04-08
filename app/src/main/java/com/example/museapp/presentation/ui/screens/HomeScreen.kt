@@ -20,17 +20,18 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import com.example.museapp.presentation.feature.home.HomeTabContent
 import com.example.museapp.presentation.feature.home.HomeViewModel
 import com.example.museapp.presentation.feature.favorites.FavoritesViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.museapp.presentation.events.EventsScreen
+import com.example.museapp.presentation.feature.events.EventsViewModel
 import com.example.museapp.ui.theme.PrimaryColor
 
 sealed class BottomTab(val route: String, val icon: ImageVector, val label: String) {
     object Home : BottomTab("home_tab", Icons.Default.Home, "Home")
     object Saved : BottomTab("saved_tab", Icons.Default.Favorite, "Saved")
     object Messages : BottomTab("messages_tab", Icons.Default.Email, "Messages")
-    object MyAds : BottomTab("account_tab", Icons.Default.Lock, "My Ads")
+    object Events : BottomTab("event_tab", Icons.Default.Lock, "Events")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,7 +62,7 @@ fun HomeScreen(
         }
     }
 
-    val bottomTabs = listOf(BottomTab.Home, BottomTab.Saved, BottomTab.Messages, BottomTab.MyAds)
+    val bottomTabs = listOf(BottomTab.Home, BottomTab.Saved, BottomTab.Messages, BottomTab.Events)
     val navBackStackEntry by outerNav.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -166,7 +167,17 @@ fun HomeScreen(
 
                 // placeholders for other tabs
                 composable(BottomTab.Messages.route) { TabContentScreen("Messages") }
-                composable(BottomTab.MyAds.route) { TabContentScreen("My Ads") }
+                composable(BottomTab.Events.route) {
+                    val viewModel: EventsViewModel = hiltViewModel()
+                    val state = viewModel.state.collectAsState().value
+                    val latLong = viewModel.latLong.collectAsState().value
+
+                    EventsScreen(
+                        state = state,
+                        onEvent = viewModel::onEvent,
+                        latLong = latLong
+                    )
+                }
             }
         }
     }

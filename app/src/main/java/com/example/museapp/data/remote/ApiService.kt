@@ -10,6 +10,7 @@ import com.example.museapp.data.remote.dto.ApiResponse
 import com.example.museapp.data.remote.dto.CacheUserDto
 import com.example.museapp.data.remote.dto.CommonRequest
 import com.example.museapp.data.remote.dto.EmptyData
+import com.example.museapp.data.remote.dto.ExploreEventResponseDto
 import com.example.museapp.data.remote.dto.FavoriteUserAddRequestDto
 import com.example.museapp.data.remote.dto.FavoriteUserAddResponseDto
 import com.example.museapp.data.remote.dto.FavoriteUserDto
@@ -119,5 +120,14 @@ interface ApiService {
 
     @GET("/api/user/profile")
     suspend fun getProfile(): ApiResponse<CacheUserDto>
+
+    @GET("search.json")
+    suspend fun getExploreEvents(
+        @Query("engine") engine: String = "google_events",
+        @Query("q") query: String,
+        @Query("hl") hl: String = "en",
+        @Query("gl") gl: String = "in",
+        @Query("api_key") apiKey: String
+    ): ExploreEventResponseDto
 
 }

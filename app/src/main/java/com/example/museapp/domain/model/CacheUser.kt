@@ -1,5 +1,8 @@
 package com.example.museapp.domain.model
 
+import com.example.museapp.data.remote.dto.FavoriteUserDto
+import com.example.museapp.data.remote.dto.FavoritedUserDto
+
 /**
  * Cache-specific domain model that mirrors the API `data` object for profile.
  * This is intentionally separate from your existing `User` model.
@@ -32,5 +35,5 @@ data class CacheUser(
     val interests: List<Interest> = emptyList(),
     val averageRating: Double? = null,
     val totalRatings: Int? = null,
-    val favoriteUsers: List<String> = emptyList()
+    val favoriteUsers: List<FavoritedUserDto> = emptyList()
 )

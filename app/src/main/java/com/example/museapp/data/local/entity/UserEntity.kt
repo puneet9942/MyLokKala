@@ -38,7 +38,7 @@ data class UserEntity(
     @ColumnInfo(name = "latitude") val latitude: Double? = null,
     @ColumnInfo(name = "longitude") val longitude: Double? = null,
 
-    @ColumnInfo(name = "profile_description") val profileDescription: String? = null,
+    @ColumnInfo(name = "profileDescription") val profileDescription: String? = null,
     @ColumnInfo(name = "bio") val bio: String? = null,
 
     @ColumnInfo(name = "created_at") val createdAt: String? = null,

@@ -3,7 +3,9 @@ package com.example.museapp.presentation.ui.navigation
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -14,22 +16,31 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.museapp.data.auth.dto.VerifyOtpData
+import com.example.museapp.data.remote.dto.ProfileCacheDto
 import com.example.museapp.data.store.TokenStore.Companion.KEY_ACCESS_TOKEN
 import com.example.museapp.presentation.feature.feedback.FeedbackScreen
 import com.example.museapp.presentation.feature.home.HomeViewModel
 import com.example.museapp.presentation.feature.login.LoginEvent
 import com.example.museapp.presentation.feature.login.LoginViewModel
-//import com.example.museapp.presentation.ui.screens.ProfileDisplayScreen
+import com.example.museapp.presentation.feature.profile.ProfileFetchOrchestratorViewModel
 import com.example.museapp.presentation.ui.screens.ProfileSetupScreen
-
 import com.example.museapp.presentation.feature.profile.ProfileSetupViewModel
-import com.example.museapp.presentation.ui.screens.ProfileCacheDisplayScreen
-
-
-import com.example.museapp.presentation.ui.screens.*
+import com.example.museapp.presentation.ui.screens.CountryPickerScreen
+import com.example.museapp.presentation.ui.screens.HomeScreen
+import com.example.museapp.presentation.ui.screens.LoginScreen
+import com.example.museapp.presentation.ui.screens.SavedScreen
+import com.example.museapp.presentation.ui.screens.DummyFullScreen
+import com.example.museapp.presentation.ui.screens.ProfileScreen
+import com.example.museapp.presentation.ui.screens.CreateAdScreen
+import com.example.museapp.presentation.ui.screens.ProfileDestinations
+import com.example.museapp.presentation.ui.screens.ProfileDestinations.PROFILE_DETAIL
+import com.example.museapp.presentation.ui.screens.SplashScreen
 import com.example.museapp.util.AppConstants.SPLASH_SCREEN_DURATION_MILLISECONDS
 import com.example.museapp.util.HideSystemBarsDuring
+import com.squareup.moshi.Moshi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlin.reflect.full.memberProperties
 
 @SuppressLint("UnrememberedGetBackStackEntry")
@@ -40,6 +51,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier
 ) {
     val startDestination = Route.Splash.path
+    val context = LocalContext.current
 
     NavHost(
         navController = navController,
@@ -50,9 +62,8 @@ fun AppNavHost(
         composable(Route.Splash.path) {
             HideSystemBarsDuring(active = true)
             SplashScreen()
-            val context = LocalContext.current
             LaunchedEffect(Unit) {
-                // Read KEY_ACCESS_TOKEN from SharedPreferences
+                // Read KEY_ACCESS_TOKEN from SharedPreferences (kept if you want auto-login later)
                 val prefs = context.getSharedPreferences("museapp_auth_prefs", Context.MODE_PRIVATE)
                 val accessToken = prefs.getString(KEY_ACCESS_TOKEN, null)
                 delay(SPLASH_SCREEN_DURATION_MILLISECONDS)
@@ -76,7 +87,7 @@ fun AppNavHost(
 
         // Login Screen
         composable(Route.Login.path) { backEntry ->
-            // get Login VM from this back entry (safe)
+            // obtain Login VM from this back entry
             val vm: LoginViewModel = hiltViewModel(backEntry)
 
             LoginScreen(
@@ -85,85 +96,122 @@ fun AppNavHost(
                 onCountryPicker = { navController.navigate(Route.CountryPicker.path) },
                 onContinue = { /* optionally used */ },
                 onLoggedIn = {
-                    // BEFORE navigating, try to extract VerifyOtpData from the LoginViewModel (defensive)
+                    // 1) try to inject one-time JSON saved by LoginViewModel into the Login savedStateHandle
                     try {
-                        val loginEntry = navController.getBackStackEntry(Route.Login.path)
+                        val prefs = context.getSharedPreferences("museapp_auth_prefs", Context.MODE_PRIVATE)
+                        val verifyJson = prefs.getString("verify_response_json", null)
 
-                        // Try common property names on the VM first
-                        val candidates = listOf(
-                            "verifyOtpData",
-                            "verifyResponse",
-                            "verifyData",
-                            "verifyResponseData",
-                            "otpVerifyResponse",
-                            "verify"
-                        )
+                        if (!verifyJson.isNullOrBlank()) {
+                            try {
+                                val loginEntry = navController.getBackStackEntry(Route.Login.path)
+                                // store JSON string under a safe key
+                                loginEntry.savedStateHandle["verifyDataJson"] = verifyJson
 
-                        var verifyToPass: VerifyOtpData? = null
-
-                        // 1) check named properties
-                        candidates.forEach { name ->
-                            if (verifyToPass != null) return@forEach
-                            runCatching {
-                                val prop = vm::class.memberProperties.firstOrNull { it.name.equals(name, ignoreCase = true) }
-                                val value = prop?.getter?.call(vm)
-                                when (value) {
-                                    is VerifyOtpData -> verifyToPass = value
-                                    is kotlinx.coroutines.flow.StateFlow<*> -> {
-                                        val inner = value.value
-                                        if (inner is VerifyOtpData) verifyToPass = inner
-                                    }
-                                    is androidx.lifecycle.LiveData<*> -> {
-                                        val inner = value.value
-                                        if (inner is VerifyOtpData) verifyToPass = inner
-                                    }
-                                }
+                                // remove the one-time cache so it won't be reused
+                               // prefs.edit().remove("verify_response_json").apply()
+                                Log.d("AppNavHost", "verify response JSON injected into savedStateHandle and removed cache")
+                            } catch (t: Throwable) {
+                                Log.w("AppNavHost", "failed to inject verify_response_json into savedStateHandle: ${t.message}")
                             }
+                        } else {
+                            Log.d("AppNavHost", "no verify_response_json found in prefs (not coming from verify flow)")
                         }
+                    } catch (t: Throwable) {
+                        Log.w("AppNavHost", "failed to access prefs for verify_response_json: ${t.message}")
+                    }
 
-                        // 2) fallback: probe vm.uiState.value for nested VerifyOtpData
-                        if (verifyToPass == null) {
-                            runCatching {
-                                val uiVal = runCatching { vm.uiState.value }.getOrNull()
-                                uiVal?.let { st ->
-                                    st::class.memberProperties.forEach { p ->
-                                        if (verifyToPass != null) return@forEach
-                                        val v = runCatching { p.getter.call(st) }.getOrNull()
-                                        if (v is VerifyOtpData) verifyToPass = v
-                                    }
-                                }
-                            }
-                        }
+                    // 2) reflection fallback: if no JSON present, try to extract the object from the VM and serialize to JSON
+                    try {
+                        val existingJson = runCatching { navController.getBackStackEntry(Route.Login.path).savedStateHandle.get<String>("verifyDataJson") }.getOrNull()
+                        if (existingJson.isNullOrBlank()) {
+                            // probe common property names on the VM for a VerifyOtpData instance
+                            val candidates = listOf(
+                                "verifyOtpData",
+                                "verifyResponse",
+                                "verifyData",
+                                "verifyResponseData",
+                                "otpVerifyResponse",
+                                "verify"
+                            )
 
-                        // 3) final fallback: scan all properties on the VM
-                        if (verifyToPass == null) {
-                            vm::class.memberProperties.forEach { prop ->
+                            var verifyToPass: VerifyOtpData? = null
+
+                            // 1) check named properties
+                            candidates.forEach { name ->
                                 if (verifyToPass != null) return@forEach
                                 runCatching {
-                                    val v = prop.getter.call(vm)
-                                    when (v) {
-                                        is VerifyOtpData -> verifyToPass = v
+                                    val prop = vm::class.memberProperties.firstOrNull { it.name.equals(name, ignoreCase = true) }
+                                    val value = prop?.getter?.call(vm)
+                                    when (value) {
+                                        is VerifyOtpData -> verifyToPass = value
                                         is kotlinx.coroutines.flow.StateFlow<*> -> {
-                                            val inner = v.value
+                                            val inner = value.value
                                             if (inner is VerifyOtpData) verifyToPass = inner
                                         }
                                         is androidx.lifecycle.LiveData<*> -> {
-                                            val inner = v.value
+                                            val inner = value.value
                                             if (inner is VerifyOtpData) verifyToPass = inner
                                         }
                                     }
                                 }
                             }
+
+                            // 2) probe uiState for nested VerifyOtpData
+                            if (verifyToPass == null) {
+                                runCatching {
+                                    val uiVal = runCatching { vm.uiState.value }.getOrNull()
+                                    uiVal?.let { st ->
+                                        st::class.memberProperties.forEach { p ->
+                                            if (verifyToPass != null) return@forEach
+                                            val v = runCatching { p.getter.call(st) }.getOrNull()
+                                            if (v is VerifyOtpData) verifyToPass = v
+                                        }
+                                    }
+                                }
+                            }
+
+                            // 3) final fallback: scan all VM properties
+                            if (verifyToPass == null) {
+                                vm::class.memberProperties.forEach { prop ->
+                                    if (verifyToPass != null) return@forEach
+                                    runCatching {
+                                        val v = prop.getter.call(vm)
+                                        when (v) {
+                                            is VerifyOtpData -> verifyToPass = v
+                                            is kotlinx.coroutines.flow.StateFlow<*> -> {
+                                                val inner = v.value
+                                                if (inner is VerifyOtpData) verifyToPass = inner
+                                            }
+                                            is androidx.lifecycle.LiveData<*> -> {
+                                                val inner = v.value
+                                                if (inner is VerifyOtpData) verifyToPass = inner
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // If found, serialize and inject as JSON string
+                            verifyToPass?.let { vt ->
+                                try {
+                                    val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+                                    val adapter = moshi.adapter(VerifyOtpData::class.java)
+                                    val json = adapter.toJson(vt)
+
+                                    val loginEntry = navController.getBackStackEntry(Route.Login.path)
+                                    loginEntry.savedStateHandle["verifyDataJson"] = json
+                                    Log.d("AppNavHost", "verify object found via reflection -> serialized and injected as JSON")
+                                } catch (t: Throwable) {
+                                    Log.w("AppNavHost", "failed to serialize verify object found via reflection: ${t.message}")
+                                }
+                            } // end verifyToPass?.let
+                        } else {
+                            Log.d("AppNavHost", "verifyDataJson already present; skipping reflection probe")
                         }
-
-                        // If found, write to savedStateHandle on the Login back entry under key "verifyData"
-                        verifyToPass?.let { loginEntry.savedStateHandle["verifyData"] = it }
-
                     } catch (t: Throwable) {
-                        // swallow - navigation should still happen even if saving fails
-                        android.util.Log.w("AppNavHost", "failed to persist verifyData into savedStateHandle: ${t.message}")
+                        Log.w("AppNavHost", "reflection-based verifyData extraction failed: ${t.message}")
                     } finally {
-                        // proceed to navigate
+                        // navigate to ProfileSetup (done in finally so navigation always occurs)
                         navController.navigate(Route.ProfileSetup.path) {
                             popUpTo(Route.Login.path) { inclusive = true }
                         }
@@ -180,80 +228,136 @@ fun AppNavHost(
 
             // safely get the login back entry (may be null)
             val loginBackEntry = runCatching { navController.getBackStackEntry(Route.Login.path) }.getOrNull()
+            val loginVm: LoginViewModel? = if (loginBackEntry != null) hiltViewModel(loginBackEntry) else null
 
-            // If loginBackEntry exists, obtain its LoginViewModel in composition
-            val loginVm: LoginViewModel? = if (loginBackEntry != null) {
-                hiltViewModel(loginBackEntry)
-            } else null
+            // --- read one-time JSON string from the login back entry (if any) ---
+            val jsonFromLoginEntry: String? = remember(loginBackEntry) {
+                runCatching { loginBackEntry?.savedStateHandle?.get<String>("verifyDataJson") }.getOrNull()
+            }
 
-            // Compose-time remember block to extract VerifyOtpData:
-            val verifyData: VerifyOtpData? = remember(loginVm, loginBackEntry) {
-                // 1) first try savedStateHandle on login back entry (explicit transport)
-                val saved = runCatching { loginBackEntry?.savedStateHandle?.get<VerifyOtpData>("verifyData") }.getOrNull()
-                if (saved != null) return@remember saved
+            // Try to parse the JSON (do not remove here yet)
+            val parsedVerifyFromJson: VerifyOtpData? = remember(jsonFromLoginEntry) {
+                if (jsonFromLoginEntry.isNullOrBlank()) null
+                else runCatching {
+                    val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+                    moshi.adapter(VerifyOtpData::class.java).fromJson(jsonFromLoginEntry)
+                }.getOrNull()
+            }
 
-                // 2) if no saved payload, try probing the login VM (if present)
+            // If parsed OK, remove the one-time saved JSON so it won't be reused
+            LaunchedEffect(parsedVerifyFromJson, loginBackEntry) {
+                if (parsedVerifyFromJson != null) {
+                    try { loginBackEntry?.savedStateHandle?.remove<String>("verifyDataJson") } catch (_: Throwable) { }
+                    Log.d("AppNavHost", "Consumed and removed verifyDataJson from savedStateHandle")
+                }
+            }
+
+            // Build verifyData by preferring parsed JSON; else fallback to reflection on the login VM
+            val verifyData: VerifyOtpData? = remember(loginVm, parsedVerifyFromJson, loginBackEntry) {
+                // 1) if parsed from JSON, use it
+                if (parsedVerifyFromJson != null) return@remember parsedVerifyFromJson
+
+                // 2) if no login VM, nothing to do
                 if (loginVm == null) return@remember null
 
-                // candidate names to try first
+                // 3) reflection probing (same robust logic as earlier)
+                var found: VerifyOtpData? = null
                 val candidatesDirect = listOf("verifyOtpData", "verifyResponse", "verifyResponseData", "verify", "verifyOtp", "verifyData", "otpVerifyResponse")
                 candidatesDirect.forEach { name ->
                     try {
                         val prop = loginVm::class.memberProperties.firstOrNull { it.name.equals(name, ignoreCase = true) }
                         val value = prop?.getter?.call(loginVm)
-                        if (value is VerifyOtpData) return@remember value
+                        if (value is VerifyOtpData) found = value
                         if (value is kotlinx.coroutines.flow.StateFlow<*>) {
                             val inner = value.value
-                            if (inner is VerifyOtpData) return@remember inner
+                            if (inner is VerifyOtpData) found = inner
                         }
                         if (value is androidx.lifecycle.LiveData<*>) {
                             val inner = value.value
-                            if (inner is VerifyOtpData) return@remember inner
+                            if (inner is VerifyOtpData) found = inner
                         }
-                    } catch (_: Throwable) { /* ignore and continue */ }
+                    } catch (_: Throwable) { }
                 }
+                if (found != null) return@remember found
 
-                // 3) final fallback: scan all properties
                 loginVm::class.memberProperties.forEach { prop ->
                     try {
                         val v = prop.getter.call(loginVm)
-                        if (v is VerifyOtpData) return@remember v
+                        if (v is VerifyOtpData) found = v
                         if (v is kotlinx.coroutines.flow.StateFlow<*>) {
                             val inner = v.value
-                            if (inner is VerifyOtpData) return@remember inner
+                            if (inner is VerifyOtpData) found = inner
                         }
                         if (v is androidx.lifecycle.LiveData<*>) {
                             val inner = v.value
-                            if (inner is VerifyOtpData) return@remember inner
+                            if (inner is VerifyOtpData) found = inner
                         }
-                    } catch (_: Throwable) { /* ignore */ }
+                    } catch (_: Throwable) { }
                 }
 
-                // 4) also attempt to inspect vm.uiState.value for nested VerifyOtpData
+                // inspect uiState for nested VerifyOtpData
                 runCatching {
                     val uiStateVal = runCatching { loginVm.uiState.value }.getOrNull()
                     uiStateVal?.let { st ->
                         st::class.memberProperties.forEach { p ->
                             try {
                                 val valP = p.getter.call(st)
-                                if (valP is VerifyOtpData) return@remember valP
+                                if (valP is VerifyOtpData) found = valP
                             } catch (_: Throwable) { }
                         }
                     }
                 }
 
-                null
+                found
             }
-            android.util.Log.d("PROFILE_PREFILL", "verifyData present? = ${verifyData != null} ; verify user: ${verifyData?.user}")
 
+            // --- NEW: read profileCacheJson from the Home entry and parse into ProfileCacheDto ---
+            val homeEntry = runCatching { navController.getBackStackEntry(Route.Home.path) }.getOrNull()
+            val profileJsonFromHome = remember(homeEntry) {
+                runCatching { homeEntry?.savedStateHandle?.get<String>("profileCacheJson") }.getOrNull()
+            }
+
+            val initialProfileCache: ProfileCacheDto? = remember(profileJsonFromHome) {
+                profileJsonFromHome?.let { json ->
+                    try {
+                        val moshi = Moshi.Builder()
+                            .add(KotlinJsonAdapterFactory())
+                            .build()
+                        moshi.adapter(ProfileCacheDto::class.java).fromJson(json)
+                    } catch (e: Throwable) {
+                        Log.w("AppNavHost", "failed to parse profileCacheJson: ${e.message}")
+                        null
+                    }
+                }
+            }
+
+            // remove the saved value after consuming it (optional, but avoids stale reuse)
+            LaunchedEffect(initialProfileCache, homeEntry) {
+                if (initialProfileCache != null) {
+                    try { homeEntry?.savedStateHandle?.remove<String>("profileCacheJson") } catch (_: Throwable) { }
+                }
+            }
+
+            Log.d("PROFILE_PREFILL", "verifyData present? = ${verifyData != null} ; profileCache present? = ${initialProfileCache != null}")
+
+            val prefs = context.getSharedPreferences("museapp_auth_prefs", Context.MODE_PRIVATE)
+            val verifyJson = prefs.getString("verify_response_json", null)
+            // Finally call ProfileSetupScreen and pass both forms (raw JSON and parsed object)
             ProfileSetupScreen(
                 viewModel = profileVm,
                 state = profileVm.state,
                 onEvent = profileVm::onEvent,
-                initialVerifyData = verifyData,
+                initialVerifyJson = verifyJson,   // raw JSON (nullable)
+                initialVerifyData = verifyData,           // parsed object if available
+                initialProfileCache = initialProfileCache,
                 onContinue = {
-                    navController.navigate(Route.Home.path) {
-                        popUpTo(Route.ProfileSetup.path) { inclusive = true }
+                    // try to pop back to previous destination (if any)
+                    val popped = navController.popBackStack()
+                    if (!popped) {
+                        // no previous entry -> go Home
+                        navController.navigate(Route.Home.path) {
+                            popUpTo(Route.ProfileSetup.path) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -272,8 +376,6 @@ fun AppNavHost(
         composable(Route.Saved.path) {
             SavedScreen(
                 onNavigateToDetails = { userId ->
-                    // If you have a profile detail route that accepts a userId, use it here.
-                    // Kept as PROFILE_FULL placeholder to avoid changing other parts of the app.
                     navController.navigate(ProfileDestinations.PROFILE_FULL)
                 }
             )
@@ -306,18 +408,77 @@ fun AppNavHost(
             })
         }
 
-        composable(ProfileDestinations.PROFILE_DETAIL) { backStackEntry ->
-            ProfileCacheDisplayScreen(
-                onUpdate = {
-                    // handle update, e.g. navigate to edit screen
-                    //navController.navigate(ProfileDestinations.PROFILE_EDIT)
+        composable(PROFILE_DETAIL) { backStackEntry ->
+            val orchestratorVm: ProfileFetchOrchestratorViewModel = hiltViewModel()
+            val profileSetupViewModel: ProfileSetupViewModel = hiltViewModel()
+
+            LaunchedEffect(Unit) {
+                Log.d("AppNavHost", "PROFILE_DETAIL LaunchedEffect start")
+
+                // do heavy / IO work on IO dispatcher to avoid races with Room writes
+                val profilePayload: ProfileCacheDto? = withContext(Dispatchers.IO) {
+                    Log.d("AppNavHost", "IO: reading cached from orchestrator.getCachedProfileFromRoom()")
+                    var cached = runCatching { orchestratorVm.getCachedProfileFromRoom() }.onFailure {
+                        Log.w("AppNavHost", "IO: getCachedProfileFromRoom failed: ${it.message}")
+                    }.getOrNull()
+
+                    Log.d("AppNavHost", "IO: initial cached=${cached?.data?.id} name=${cached?.data?.fullName} epochCandidate=${cached?.data?.updatedAt}")
+
+                    // 2) if missing, fetch from network and cache (usecase should persist)
+                    if (cached == null) {
+                        Log.d("AppNavHost", "IO: no cached -> calling fetchAndCacheProfileFromApi()")
+                        val fetched = runCatching { orchestratorVm.fetchAndCacheProfileFromApi() }
+                            .onFailure { Log.w("AppNavHost", "IO: fetchAndCacheProfileFromApi failed: ${it.message}") }
+                            .getOrNull()
+
+                        Log.d("AppNavHost", "IO: fetched=${fetched?.data?.id} name=${fetched?.data?.fullName} iso=${fetched?.data?.updatedAt}")
+
+                        if (fetched != null) {
+                            cached = fetched
+                        } else {
+                            Log.d("AppNavHost", "IO: fetch returned null -> re-reading Room for persisted value")
+                            cached = runCatching { orchestratorVm.getCachedProfileFromRoom() }
+                                .onFailure { Log.w("AppNavHost", "IO: second getCachedProfileFromRoom failed: ${it.message}") }
+                                .getOrNull()
+                            Log.d("AppNavHost", "IO: re-read cached=${cached?.data?.id} name=${cached?.data?.fullName} epochCandidate=${cached?.data?.updatedAt}")
+                        }
+                    } else {
+                        Log.d("AppNavHost", "IO: cached exists, doing one more read to confirm freshness")
+                        val maybeFresh = runCatching { orchestratorVm.getCachedProfileFromRoom() }
+                            .onFailure { Log.w("AppNavHost", "IO: maybeFresh read failed: ${it.message}") }
+                            .getOrNull()
+                        Log.d("AppNavHost", "IO: maybeFresh=${maybeFresh?.data?.id} name=${maybeFresh?.data?.fullName} iso=${maybeFresh?.data?.updatedAt}")
+                        if (maybeFresh != null) cached = maybeFresh
+                    }
+
+                    cached
+                } // withContext(IO)
+
+                Log.d("AppNavHost", "PROFILE_DETAIL finished IO; profilePayload id=${profilePayload?.data?.id} name=${profilePayload?.data?.fullName} iso=${profilePayload?.data?.updatedAt}")
+
+                try {
+                    val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+                    val adapter = moshi.adapter(ProfileCacheDto::class.java)
+                    val json = profilePayload?.let { adapter.toJson(it) }
+                    Log.d("AppNavHost", "Saving profileCacheJson into Home savedStateHandle; jsonLen=${json?.length ?: 0}")
+                    val homeEntry = runCatching { navController.getBackStackEntry(Route.Home.path) }.getOrNull()
+                    homeEntry?.savedStateHandle?.set("profileCacheJson", json)
+                } catch (t: Throwable) {
+                    Log.w("AppNavHost", "serialize/save profileCacheJson failed: ${t.message}")
                 }
-            )
+
+                navController.navigate(Route.ProfileSetup.path) {
+                    popUpTo(PROFILE_DETAIL) { inclusive = true }
+                    launchSingleTop = true
+                }
+
+                Log.d("AppNavHost", "PROFILE_DETAIL navigation to ProfileSetup requested")
+            }
         }
+
         composable(ProfileDestinations.PROFILE_SUBSCRIPTIONS) { DummyFullScreen(title = "My subscriptions") }
         composable(ProfileDestinations.SUBSCRIBE_PRO) { DummyFullScreen(title = "Subscribe to Pro") }
         composable(ProfileDestinations.REFER_APP) { DummyFullScreen(title = "Refer the App") }
-       // composable(ProfileDestinations.FEEDBACK) { DummyFullScreen(title = "Send Feedback") }
         composable(ProfileDestinations.RATE_APP) { DummyFullScreen(title = "Rate App") }
         composable(ProfileDestinations.ABOUT_US) { DummyFullScreen(title = "About Us") }
         composable(ProfileDestinations.TERMS) { DummyFullScreen(title = "Terms & Conditions") }

@@ -2,16 +2,19 @@ package com.example.museapp.presentation.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -30,31 +33,45 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.museapp.domain.model.CacheUser
 import com.example.museapp.presentation.feature.profile.ProfileCacheEvent
 import com.example.museapp.presentation.profile.ProfileCacheDisplayViewModel
+import com.example.museapp.presentation.ui.navigation.Route
+import com.google.gson.Gson
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 /**
- * Fixed LazyColumn / LazyRow usage to avoid "item(...) cannot be called in this context"
- * and to ensure the screen is scrollable and displays media and all user attributes.
+ * ProfileCacheDisplayScreen wired to navigate to existing ProfileSetupScreen route.
  *
- * Requires Coil compose dependency for AsyncImage:
- * implementation("io.coil-kt:coil-compose:2.4.0")
+ * - If navController is provided, the "Become an Artist?" card will navigate to Route.ProfileSetup.path
+ *   and will attempt to put the cached user JSON into navController.currentBackStackEntry?.savedStateHandle
+ *   under key "prefill_profile_json".
+ * - If navController is null, the provided onBecomeArtist lambda will be invoked.
+ *
+ * All other UI and helper functions are kept as before.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileCacheDisplayScreen(
     viewModel: ProfileCacheDisplayViewModel = hiltViewModel(),
-    onUpdate: () -> Unit = { viewModel.onEvent(ProfileCacheEvent.RefreshProfile) }
+    navController: NavHostController? = null, // optional, passed from AppNavHost
+    onUpdate: () -> Unit = { viewModel.onEvent(ProfileCacheEvent.RefreshProfile) },
+    onBecomeArtist: () -> Unit = { navController?.navigate(Route.ProfileSetup.path) }, // default uses Route.ProfileSetup.path
+    onUpdateProfile: (fullName: String, dob: String) -> Unit = { _, _ -> onUpdate() } // placeholder
 ) {
     val state = viewModel.uiState.collectAsState().value
     val ctx = LocalContext.current
@@ -80,18 +97,19 @@ fun ProfileCacheDisplayScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
+
             if (state.isLoading) {
                 item {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(modifier = Modifier.padding(top = 24.dp))
                 }
                 return@LazyColumn
             }
 
             if (state.error != null) {
                 item {
-                    Text(text = "Error: ${state.error}")
+                    Text(text = "Error: ${state.error}", modifier = Modifier.padding(vertical = 8.dp))
                     Button(
-                        onClick = { viewModel.onEvent(ProfileCacheEvent.Retry(state.error)) },
+                        onClick = { viewModel.onEvent(ProfileCacheEvent.Retry("retry")) },
                         modifier = Modifier.padding(top = 12.dp)
                     ) {
                         Text(text = "Retry")
@@ -114,29 +132,112 @@ fun ProfileCacheDisplayScreen(
             }
 
             // From here: state.user != null
-            val user = state.user
+            val user = state.user!!
 
-            // Avatar
+            // TOP block: Avatar, FullName (editable), DOB (editable), Become an Artist card
             item {
-                val avatarUrl = findFirstStringAttribute(
-                    user,
-                    listOf("avatar", "avatarUrl", "profilePic", "profile_picture", "photo", "picture", "imageUrl")
-                )
-                if (!avatarUrl.isNullOrBlank()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Avatar circle
+                    val avatarUrl = findFirstStringAttribute(
+                        user,
+                        listOf("avatar", "avatarUrl", "profilePic", "profile_picture", "photo", "picture", "imageUrl")
+                    )
                     Surface(
                         modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .height(128.dp)
-                            .aspectRatio(1f),
+                            .size(120.dp)
+                            .clip(CircleShape),
                         shape = CircleShape
                     ) {
-                        AsyncImage(
-                            model = avatarUrl,
-                            contentDescription = "Profile picture",
+                        if (!avatarUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Profile picture",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Box(modifier = Modifier.fillMaxSize()) {}
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // editable fields (remembered)
+                    val initialName = findFirstStringAttribute(user, listOf("fullName", "full_name", "name")) ?: ""
+                    val initialDob = findFirstStringAttribute(user, listOf("dob", "dateOfBirth", "date_of_birth")) ?: ""
+
+                    val nameState = rememberSaveable { mutableStateOf(initialName) }
+                    val dobState = rememberSaveable { mutableStateOf(initialDob) }
+
+                    OutlinedTextField(
+                        value = nameState.value,
+                        onValueChange = { nameState.value = it },
+                        label = { Text("Full name") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 6.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = dobState.value,
+                        onValueChange = { dobState.value = it },
+                        label = { Text("DOB") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 6.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Become an Artist card - navigate to your ProfileSetupScreen route
+                    Card(
+                        border = BorderStroke(2.dp, Color(0xFF2E8B57)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .clickable {
+                                // prefer navController-based navigation if passed, otherwise call provided lambda
+                                if (navController != null) {
+                                    // Attempt to serialize cached user to JSON and place it on savedStateHandle
+                                    try {
+                                        val gson = Gson()
+                                        val json = gson.toJson(user)
+                                        // put JSON onto savedStateHandle of the nav controller destination
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("prefill_profile_json", json)
+                                    } catch (_: Throwable) {
+                                        // serialization failure is non-fatal; still navigate
+                                    } finally {
+                                        // navigate with a flag so the destination can know it's from cache
+                                        navController.navigate("${Route.ProfileSetup.path}?fromCache=true")
+                                    }
+                                } else {
+                                    onBecomeArtist()
+                                }
+                            }
+                    ) {
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(CircleShape)
-                        )
+                                .padding(vertical = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = "Become an Artist?", modifier = Modifier.padding(bottom = 6.dp))
+                            Text(text = "Share your talent with world")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Update Profile button (passes current editable values)
+                    Button(
+                        onClick = { onUpdateProfile(nameState.value.trim(), dobState.value.trim()) }
+                    ) {
+                        Text(text = "Update Profile")
                     }
                 }
             }
@@ -145,7 +246,12 @@ fun ProfileCacheDisplayScreen(
             val imageList = findCollectionOfStrings(user, listOf("images", "photos", "gallery", "imageUrls", "photoUrls"))
             if (!imageList.isNullOrEmpty()) {
                 item {
-                    Text(text = "Images", modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
+                    Text(
+                        text = "Images",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                    )
                 }
                 item {
                     LazyRow(
@@ -164,6 +270,7 @@ fun ProfileCacheDisplayScreen(
                                 AsyncImage(
                                     model = url,
                                     contentDescription = "Image",
+                                    contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -176,7 +283,12 @@ fun ProfileCacheDisplayScreen(
             val videoList = findCollectionOfStrings(user, listOf("videos", "videoUrls", "video_links", "videoUrlsList"))
             if (!videoList.isNullOrEmpty()) {
                 item {
-                    Text(text = "Videos", modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp))
+                    Text(
+                        text = "Videos",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                    )
                 }
                 items(videoList) { videoUrl ->
                     Card(
@@ -191,10 +303,10 @@ fun ProfileCacheDisplayScreen(
                             }
                     ) {
                         Box(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                            // try to load thumbnail (if URL is image); otherwise coil will show placeholder
                             AsyncImage(
                                 model = videoUrl,
                                 contentDescription = "Video thumbnail",
+                                contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(160.dp)
@@ -248,15 +360,16 @@ private fun ProfileCacheReadOnlyContentAllAttributes(user: CacheUser, isFromCach
         val skip = setOf(
             "images", "photos", "gallery", "imageUrls", "photoUrls",
             "videos", "videoUrls", "avatar", "avatarUrl", "profilePic",
-            "profile_picture", "photo", "picture", "imageUrl"
+            "profile_picture", "photo", "picture", "imageUrl",
+            // skip fields we rendered/editable at top
+            "fullName", "full_name", "name", "dob", "dateOfBirth", "date_of_birth"
         )
 
         props.sortedBy { it.name }.forEach { prop ->
             if (skip.contains(prop.name)) return@forEach
 
             val rawValue = try {
-                @Suppress("UNCHECKED_CAST")
-                (prop as KProperty1<CacheUser, *>).get(user)
+                prop.getter.call(user)
             } catch (t: Throwable) {
                 null
             }
